@@ -1,0 +1,937 @@
+An exploration of Wine Quality  by James Cooper
+========================================================
+
+# Introduction
+
+This report will explore the White Wine dataset and see what conclusions we can
+draw about what makes a good wine.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using in your analysis in this code
+# chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk. This
+# prevents the code from displaying in the knitted HTML output. You should set
+# echo=FALSE for all code chunks in your file, unless it makes sense for your
+# report to show the code that generated a particular plot.
+
+# The other parameters for "message" and "warning" should also be set to FALSE
+# for other code chunks once you have verified that each plot comes out as you
+# want it to. This will clean up the flow of your report.
+
+library(ggplot2)
+library(gridExtra)
+library(knitr)
+library(dplyr)
+library(GGally)
+```
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+getwd()
+wd <- read.csv('C:/Users/James2SxyBoogaloo/Google Drive/Data/P4 - EDA/wineQualityReds.csv', header = TRUE)
+```
+# Univariate Plots Section
+
+## Distribution of Each Variable
+
+FIXED ACIDITY:
+
+```{r echo=FALSE, Univariate_Plot_var2}
+plot.hist <- function(x.var, wd, bw){
+  ggplot(wd, aes_string(x = x.var)) +
+    geom_histogram(binwidth = bw)
+}
+
+plot.hist('fixed.acidity', wd, 0.1)
+#ggplot(data = wd,
+      # aes(x = fixed.acidity)) +
+       #geom_histogram(binwidth = 0.1)
+```
+
+The values appear to be clustered around 8 however let's do a simple summary to
+see what we get. I'll also include a boxplot to represent this visually.
+
+```{r echo=FALSE, Univariate_Plot_var2_sum}
+summary(wd$fixed.acidity)
+```
+
+```{r echo=FALSE, Univariate_Plots_var2_2}
+ggplot(data = wd,
+       aes(x = X, y = fixed.acidity)) +
+       geom_boxplot()
+```
+
+There are a few outliers that have nearly double fixed acidity of the other
+wines.
+
+I will use summary tables instead of boxplots going forward, unless there is a
+particular reason not to.
+
+VOLATILE ACIDITY:
+
+```{r echo=FALSE, Univariate_Plots_var3}
+plot.hist('volatile.acidity', wd, 0.01)
+```
+```{r echo=FALSE, Univariate_Plot_var3_sum}
+summary(wd$volatile.acidity)
+```
+
+IQR of 0.39 to 0.64
+
+Outliers - A few on the high side. 
+
+CITRIC ACID:
+
+```{r echo=FALSE, Univariate_Plots_var13}
+plot.hist('citric.acid', wd, 0.01)
+```
+
+```{r echo=FALSE, Univariate_Plot_var13_sum}
+summary(wd$citric.acid)
+```
+
+IQR of 0.09 to 1
+
+Outliers - A single high outlier
+
+RESIDUAL SUGAR:
+```{r echo=FALSE, Univariate_Plots_var4}
+plot.hist('residual.sugar', wd, 0.3)
+```
+
+```{r echo=FALSE, Univariate_Plot_var4_sum}
+summary(wd$residual.sugar)
+```
+
+Distance between the third quartile and the max is massive - several high
+outliers. This meant the data was a good fit for the use of a transformation.
+
+CHLORIDES:
+
+```{r echo=FALSE, Univariate_Plots_var5}
+plot.hist('chlorides', wd, 0.01)
+```
+
+Chloride data was heavily skewed so I used log10 once again - we can more
+clearly see the fairly normal distribution here.
+
+```{r echo=FALSE, Univariate_Plot_var5_sum}
+summary(wd$chlorides)
+```
+
+Again, large difference between the 3rd quartile and max. A few values on the
+low end as well - whilst visually these are not outliers, it could be worth
+keeping track of these results.
+
+SULFUR DIOXIDE:
+```{r echo=FALSE, Univariate_Plots_var6}
+plot.hist('free.sulfur.dioxide', wd, 2)
+```
+
+```{r echo=FALSE, Univariate_Plot_var6_sum}
+summary(wd$free.sulfur.dioxide)
+```
+
+Yet again we can see that several outliers are present, and the familiar
+pattern of a large top quartile appears once again. The distribution is skewed,
+so lets see what taking the log does:
+
+```{r echo=FALSE, Univariate_Plots_var66}
+ggplot(data = wd,
+       aes(x = free.sulfur.dioxide)) +
+       geom_histogram(binwidth =0.05) +
+scale_x_log10()
+```
+
+The log adjusted FS02 figures show a bimodal distribution.
+
+TOTAL SULFUR DIOXIDE:
+
+```{r echo=FALSE, Univariate_Plots_var7}
+plot.hist('total.sulfur.dioxide', wd, bw = 3)
+```
+
+```{r echo=FALSE, Univariate_Plot_var7_sum}
+summary(wd$total.sulfur.dioxide)
+```
+
+As above.
+
+```{r echo=FALSE, Univariate_Plots_var76}
+ggplot(data = wd,
+       aes(x = total.sulfur.dioxide)) +
+       geom_histogram() +
+  scale_x_log10()
+```
+
+Taking the log reveals a nice normal distribution.
+
+DENSITY:
+```{r echo=FALSE, Univariate_Plots_var8}
+plot.hist('density', wd, 0.0002)
+
+```
+
+```{r echo=FALSE, Univariate_Plot_var8_sum}
+summary(wd$density)
+```
+
+A normal distribution - however some of the wines appear to be less dense than
+water! This is odd because we would expect density to increase because of sugar
+and alcohol content.
+
+pH:
+
+```{r echo=FALSE, Univariate_Plots_var9}
+plot.hist('pH', wd, 0.01)
+```
+
+```{r echo=FALSE, Univariate_Plot_var9_sum}
+summary(wd$pH)
+```
+
+A fairly well spread out distribution. As pH is logarithmic, a difference of 1
+tells us that there are actually some wines that are more than ten times as
+acidic as others!
+
+SULPHATES:
+
+```{r echo=FALSE, Univariate_Plots_var10}
+plot.hist('sulphates', wd, 0.01)
+```
+
+```{r echo=FALSE, Univariate_Plot_var10_sum}
+summary(wd$sulphates)
+```
+
+A high Q4 again - and some significant outliers.
+
+ALCOHOL:
+
+```{r echo=FALSE, Univariate_Plots_var11}
+plot.hist('alcohol', wd, 0.1)
+
+```
+
+```{r echo=FALSE, Univariate_Plot_var11_sum}
+summary(wd$alcohol)
+```
+
+QUALITY:
+
+```{r echo=FALSE, Univariate_Plots_var12}
+ggplot(data = wd,
+       aes(x = quality)) +
+       geom_bar()
+```
+
+```{r echo=FALSE, Univariate_Plot_var12_sum}
+summary(wd$quality)
+```
+
+# Univariate Analysis
+
+STRUCTURE:
+
+```{r echo=FALSE, STR}
+str(wd)
+```
+
+### What is the structure of your dataset?
+
+The following information taken directly from 
+https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityInfo.txt
+
+ Description of Input Variables
+
+   1 - fixed acidity: most acids involved with wine or fixed or nonvolatile (do
+   not evaporate readily)
+
+   2 - volatile acidity: the amount of acetic acid in wine, which at too high
+   of levels can lead to an unpleasant, vinegar taste
+
+   3 - citric acid: found in small quantities, citric acid can add 'freshness' 
+   and flavor to wines
+
+   4 - residual sugar: the amount of sugar remaining after fermentation stops, 
+   it's rare to find wines with less than 1 gram/liter and wines with greater
+   than 45 grams/liter are considered sweet
+
+   5 - chlorides: the amount of salt in the wine
+
+   6 - free sulfur dioxide: the free form of SO2 exists in equilibrium between 
+   molecular SO2 (as a dissolved gas) and bisulfite ion; it prevents microbial
+   growth and the oxidation of wine
+
+   7 - total sulfur dioxide: amount of free and bound forms of S02; in low 
+   concentrations, SO2 is mostly undetectable in wine, but at free SO2
+   concentrations over 50 ppm, SO2 becomes evident in the nose and taste of
+   wine
+
+   8 - density: the density of water is close to that of water depending on the
+   percent alcohol and sugar content
+
+   9 - pH: describes how acidic or basic a wine is on a scale from 0
+   (very acidic) to 14 (very basic); most wines are between 3-4 on the pH scale
+
+   10 - sulphates: a wine additive which can contribute to sulfur dioxide gas
+   (S02) levels, wich acts as an antimicrobial and antioxidant
+
+   11 - alcohol: the percent alcohol content of the wine
+
+   Output variable (based on sensory data): 
+   
+   12 - quality (score between 0 and 10)
+
+An interesting note is that the authors point out that they are unsure whether
+all the input variable are relevant. If too many variables with a high 
+correlation are left in this could harm the regression.
+
+### What is/are the main feature(s) of interest in your dataset?
+
+Main feature of interest is the quality scores as this is the output variable.
+The main point of this exploration is to find out which input variables are
+useful predictors of quality.This is of course subject to the major caveat that
+Quality itself is not an objective measure, and furthermore that the quality of 
+this non- objective measure (a wine experts ability to consistently and 
+accurately grade wine in a controlled blind environment) has been called into
+question (read: completely debunked) by numerous recent studies.
+
+www.theguardian.com/lifeandstyle/2013/jun/23/wine-tasting-junk-science-analysis
+
+### What other features in the dataset do you think will help support your \
+###investigation into your feature(s) of interest?
+
+I think that the outliers will provide a useful insight into the grades
+received. I would expect that the wines with a massive concentration of salt /
+acid would tend towards lower scores.
+
+### Did you create any new variables from existing variables in the dataset?
+
+No - I felt that whilst this woud be possible ( IE create bound S02 measure by
+subtracting free SO2 from total S02), I felt that this was unlikely to provide
+any extra insight. After all, the curators have not included it in the dataset
+- I am assuming they know more about wine than me.
+
+### Of the features you investigated, were there any unusual distributions?
+
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+
+No - as mentioned above, I want to retain the outliers for now. Later I can
+exclude them if necessary. However in the plots above I have also included more
+zoomed in graphs that better show the bulk of the data.
+
+# Bivariate Plots Section
+
+QUALITY VERSUS FREE SO2
+
+```{r echo=FALSE, Bivariate_Plot1}
+ggplot(aes(x = quality, y = free.sulfur.dioxide),
+             data = wd) +
+  geom_jitter(alpha = 0.4)
+```
+
+This doesn't really show a clear relationship - there are so many more
+observations for quality 5 and 6 wines that it is difficult to get a feel for
+the data.
+
+QUALITY VERSUS Total SO2
+
+```{r echo=FALSE, Bivariate_Plot2}
+ggplot(aes(x = quality, y = total.sulfur.dioxide),
+             data = wd) +
+  geom_jitter(alpha = 0.4)
+```
+
+THese graphs don't really show us too much however of some note are the 2
+outliers that got a 7 in taste despite havingthe highest So2 scores. THis seems 
+odd!
+
+REVISITNG Q VS FREE SO2 and Q vs bound SO2 - this time  using boxplots.
+
+QUALITY VERSUS free SO2 2
+
+```{r echo=FALSE, Bivariate_Plot3}
+
+ggplot(aes(x = quality, y = free.sulfur.dioxide, group = quality),
+             data = wd) +
+  geom_boxplot() +
+  coord_cartesian(ylim = c(0, 50))
+
+```
+
+Quality versus total So2 2
+
+```{r echo=FALSE, Bivariate_Plot4}
+ggplot(aes(x = quality, y = total.sulfur.dioxide, group = quality),
+             data = wd) +
+  geom_boxplot() +
+  coord_cartesian(ylim = c(0, 175))
+  
+```
+
+Note the mean similarities.
+
+```{r echo=FALSE, x}
+with(wd, cor.test(free.sulfur.dioxide, quality, method = 'pearson'))
+
+with(wd, cor.test(total.sulfur.dioxide, quality, method = 'pearson'))
+
+```
+
+There is a relationship here, but it is extremely weak. This means that 1. 
+Outliers are masking due to experimenal error or 2. other factors are masking
+this due to interrelationships between variables.
+
+We can at least address the first one by removing the outliers. Let's see what
+effect that has.There are mutiple ways to do this. I will simply exclude FSO
+over 60.
+
+```{r echo=FALSE, xs}
+with(subset(wd, free.sulfur.dioxide <= 60), cor.test(free.sulfur.dioxide, quality))
+```
+
+Excluding outliers actually reduces the correlation for Fs02.
+
+And for Total FS02:
+
+```{r echo=FALSE, xss}
+with(subset(wd, total.sulfur.dioxide <= 200), cor.test(total.sulfur.dioxide, quality))
+```
+
+On the other hand, exluding the outliers actually strengthens the relationship
+between TSO2 and quality.
+
+THis is a bit confusing - the wording used in the model implied that there would
+be a negative impact on the taste of the wine based on the free rather than
+total sulphur content.
+However there are several other variables at work here and it is possible that
+this is simply not a major factor relative to them. Before giving up on this
+line of inquiry I will attempt to examine this one last time.
+
+I am going to take an average of the Quality score for each concentration,
+flipping the chart in the process.
+
+I will use Dplyr to group by free.sulfur.dioxide.
+
+```{r echo=FALSE, anulook}
+library(dplyr)
+free_groups <- group_by(wd, free.sulfur.dioxide)
+
+wd.qual_by_free <- summarise(free_groups,
+                             quality_mean = mean(quality),
+                             quality_median = median(quality),
+                             n = n())
+head(wd.qual_by_free)
+```
+```{r echo=FALSE, anulook2}
+ggplot(aes(x = free.sulfur.dioxide, y = quality_mean),
+       data = wd.qual_by_free) +
+  geom_point() +
+  geom_smooth()
+```
+
+THere is a lot of variance introduced by individual readings.
+If we round FSO we can smooth some of this out to see if the relationship 
+becomes a little clearer.
+
+```{r echo=FALSE, anulook26}
+ggplot(aes(x = round(free.sulfur.dioxide / 2) * 2, y = quality_mean),
+       data = wd.qual_by_free) +
+  geom_point() +
+  geom_smooth()
+```
+
+Unfortunately this approach does not really give us a smoother line as expected.
+
+```{r echo=FALSE, anulook3}
+ggplot(aes(x = free.sulfur.dioxide, y = n),
+       data = wd.qual_by_free) +
+  geom_point()
+```
+
+There is also a massive difference in the number of observations for each
+concentration. Clearly the means for the quality of the higher concentrations of
+SO2 are going to be much less accurate than those on the lower end.
+
+```{r echo=FALSE, bins}
+wd.qual_by_free$fs02bin <- as.numeric(cut_number(wd.qual_by_free$free.sulfur.dioxide, 200))
+
+ggplot(aes(x = fs02bin, y = quality_mean),
+       data = wd.qual_by_free) +
+  geom_point() +
+  geom_smooth()
+
+```
+
+This was the first attempt to bin FS02 - it failed.
+
+I will come back to this graph as it raises some interesting questions.
+
+For now I will end the exploration of FS02 by itself by examining the median
+rather than the mean.
+
+```{r echo=FALSE, bins6}
+ggplot(aes(x = fs02bin, y = quality_median),
+       data = wd.qual_by_free) +
+  geom_point() +
+  geom_smooth()
+
+```
+
+I should have known that this would not provide any useful insight.
+
+Let's take a step back and see how TSO2 and FSO2 are related:
+
+```{r echo=FALSE, SUlphur}
+ggplot(data = wd,
+       aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide)) +
+      geom_point(alpha = 0.2,
+                 position = position_jitter(h = 0),
+                 color = 'blue') +
+      geom_line(stat = 'summary', fun.y = mean) +
+      geom_smooth(method = 'lm', color = 'red')
+```
+
+One interesting thing about the boxplots further above is that the free and
+total S02 appear to show similar distributions, if we look at the mean for each
+quality level.This appears to be consistent with the fact that they are
+moderately correlated with each other, as demonstrated here.
+
+Corr to confirm:
+
+```{r echo=FALSE, Pear}
+with(wd, cor.test(free.sulfur.dioxide, total.sulfur.dioxide))
+```
+
+Moderate level of correlation. I was actually expecting this to be higher.
+
+I am now going to repeat the exploration that I did for FSO2 for total FSO2.
+Seeing as the two variables are correlated, and that the correlation was 
+stronger between total FS02 and Quality versus free S02 and quality, this
+means that it is more likely we will be able to tease out the relationship 
+from our graphs.
+
+```{r echo=FALSE, Pearso66}
+total_groups <- group_by(wd, total.sulfur.dioxide)
+
+wd.qual_by_total <- summarise(total_groups,
+                             quality_mean = mean(quality),
+                             quality_median = median(quality),
+                             n = n())
+```
+
+This time to avoid getting caught out I'll plot the distributions of 
+observations first.
+
+```{r echo=FALSE, anulook46}
+ggplot(aes(x = total.sulfur.dioxide, y = n),
+       data = wd.qual_by_total) +
+  geom_line() +
+  coord_cartesian(xlim=c(0,160))
+```
+
+Again we see that the lower concentrations are more highly represented in the
+data than the higher observations.
+
+I have a feeling I used the wrong approach to address this earlier. Rather than 
+grouping by FS02 score, I should have first created a new variable in the
+original dataframe to assign each observation a percentile FSO2. THen I could
+group by THAT, and the resulting graph would be adjusted for frequency.
+
+The next couple of graphs I will remedy this mistake and also investigate
+TOTAL FS02.
+
+```{r echo=FALSE,666 }
+#Use the Ntile function to group FSO2 and TSO2 by the relative rank of the score
+#leaving an equal number of observations assigned to each percentile.
+#This percentile will be plotted vs mean quality.
+
+#Create new dataframes for the fixed distributions of the means.
+
+wd2 <- wd
+wd2$pfree <- ntile(wd$free.sulfur.dioxide, 
+                                     n = 100)
+wd2$ptotal <- ntile(wd$total.sulfur.dioxide,
+                    n = 100)
+
+free_groups_fixed <- group_by(wd2, pfree)
+
+wd.qual_by_free_fixed <- summarise(free_groups_fixed,
+                             quality_mean = mean(quality),
+                             n = n())
+
+total_groups_fixed <- group_by(wd2, ptotal)
+
+wd.qual_by_total_fixed <- summarise(total_groups_fixed,
+                             quality_mean = mean(quality),
+                             n = n())
+```
+
+ok, now , lets revisit Fs02 (the pfree variable is the percentile of Fs02):
+
+
+```{r echo=FALSE, 6666}
+ggplot(aes(x = pfree, y = quality_mean),
+       data = wd.qual_by_free_fixed ) +
+  geom_point() +
+  geom_smooth()
+```
+
+Well, now we can see clearly what was already confirmed in the correlation - 
+there isn't really a relationship between free S02 and Quality.
+
+Now I will repeat the processs for Total Fs02. First I will show the old way
+(without adjusting for n)
+
+```{r echo=FALSE, anulook266}
+ggplot(aes(x = total.sulfur.dioxide, y = quality_mean),
+       data = wd.qual_by_total) +
+  geom_point() +
+  geom_smooth() +
+  coord_cartesian(xlim=c(0,160))
+```
+
+As discussed before, it is difficult to extract meaning from this graph because
+we know that some points are more valid than others, specifically the higher
+TS02 concentraions tend to be based on less observations. There is a vague trend
+downward but it isn't very steep, and it appears to start to increase!
+
+```{r echo=FALSE, 666666}
+ggplot(aes(x = ptotal, y = quality_mean),
+       data = wd.qual_by_total_fixed ) +
+  geom_point() +
+  geom_smooth()
+```
+
+After adjusting for n and fitting our smoothedline we can now see a reasonably
+clear, extremely weak negative relationship!
+
+Not only that, but we can also see a slight drop at the lower end of the
+concentration scale - could this be because more microbes were present to spoil
+the wine?
+
+I am quite pleased with the above methodology, as it can now be applied easily
+to two other variables that I want to explore: Acetic acid concentration
+(variable = volatile acidity) and Citric acid concentration.
+
+Based on the descriptions of these variables, I would expect Acetic acid to be
+negatively correlated with quality, and Citric acid to be positively correlated.
+
+Acetic Acid Exploration:
+
+```{r echo=FALSE, 77}
+wd2$pacetic <- ntile(wd$volatile.acidity, 
+                    n = 100)
+
+acetic_groups<- group_by(wd2, pacetic)
+
+wd.qual_by_acetic <- summarise(acetic_groups,
+                             quality_mean = mean(quality),
+                             n = n())
+
+ggplot(aes(x = pacetic, y = quality_mean),
+       data = wd.qual_by_acetic) +
+  geom_point() +
+  geom_smooth()
+```
+
+A nice clear, negative correlation, as we expected.
+
+To confirm:
+
+```{r echo=FALSE, Pearscetic}
+with(wd, cor.test(volatile.acidity, quality))
+```
+
+On to Citric Acid:
+
+```{r echo=FALSE, 777}
+wd2$pcitric <- ntile(wd$citric.acid, 
+                    n = 100)
+
+citric_groups <- group_by(wd2, pcitric)
+
+wd.qual_by_citric<- summarise(citric_groups,
+                             quality_mean = mean(quality),
+                             n = n())
+
+ggplot(aes(x = pcitric, y = quality_mean),
+       data = wd.qual_by_citric) +
+  geom_point() +
+  geom_smooth()
+```
+
+We see again a nice clear relationship that fits with the description of Citric
+acid as being associated with positive qualities.
+It is possible that there is a curve because the perception of 
+"Freshness" by the taster is only possible above certain concentrations of 
+Citric acid?
+
+The positive correlation is confirmed below:
+
+```{r echo=FALSE, Pearsoetic7}
+with(wd, cor.test(citric.acid, quality))
+```
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed
+
+The relationships I investigated were:
+
+Free S02 versus quality
+
+Total S02 versus quality 
+
+Free S02 versus Total S02
+
+Volatile acid versus quality
+
+Citric acid versus quality.
+
+The main result of the investigation was that Acetic acid was moderately
+correlated with a decline in quality. There wasn't a relationship between free
+SO2 and quality as the description of the Total S02 variable would suggest.
+Confusingly however, the TS02 variable was weakly correlated with quality, and
+there was a a moderate correlation between Free So2 and Total So2.
+
+### Did you observe any interesting relationships between the other features \
+###not the main feature(s) of interest)?
+
+A strong positive correlation was observed between Free and Total SO2
+
+### What was the strongest relationship you found?
+
+The above.
+
+# Multivariate Plots Section
+
+I will start by creating a new categorical variable based on quality score.
+This will allow us to combine this with our other numberic data in the same plot.
+
+```{r echo=FALSE, Multivariate_Plot_Setup}
+#Create a new categorical variable for quality to al
+
+wd$CatQ <- cut(wd$quality, breaks = c(0, 4, 6, 8), labels = c("Poor", "Mediocre", "Good"))
+
+#Create a new categorical variable for ACETIC 
+wd$CatACETIC <- cut(wd$volatile.acidity, breaks = 3, labels = c("Low", "Medium", "High"))
+
+#ggpairs(wd3)
+```
+
+```{r echo=FALSE, Multivariate_Plots}
+wd3 <- wd[, c("volatile.acidity", "free.sulfur.dioxide", "total.sulfur.dioxide", "pH", "sulphates", "quality", "CatQ", "CatACETIC")]
+
+ggpairs(wd3)
+
+#ggpairs(wd3)
+```
+```{r echo=FALSE, Multivariate_Investigations}
+ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide),
+       data = wd3) +
+       geom_point(aes(color = CatQ)) +
+  geom_smooth() +
+  scale_color_brewer(type = "seq")
+```
+
+As previously established, FSO2 and TS02 are linked.
+
+We know that both distributions are skewed, however. This will impact
+readability.
+
+Lets try taking the log of both variables and see if anything jumps out to relate the
+ratio of these two variables to quality:
+
+```{r echo=FALSE, Multivariate_Investigations7}
+#wd3$logTS02 <- log(wd3$total.sulfur.dioxide)
+#wd3$logFS02 <- log(wd3$free.sulfur.dioxide)
+
+ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide),
+       data = wd3) +
+       geom_point(aes(color = CatQ)) +
+  geom_smooth() +
+scale_color_brewer(type = "seq") +
+  scale_x_log10(breaks = c(1, 5, 10, 15, 30)) +
+  scale_y_log10()
+```
+
+The majority of the Good quality wines appear to fall below the line of best fit
+- this is worth looking into further; I will come back to this in my final
+graphs.
+
+```{r echo=FALSE, Multivariate_Investigations77}
+ggplot(aes(x = sulphates, y = total.sulfur.dioxide),
+       data = wd3) +
+       geom_point(aes(color = CatQ)) +
+  geom_smooth() +
+  scale_color_brewer(type = "seq")
+```
+
+I was hoping to shed some light on the interrelationship of the Sulphate
+variable with TSO2, but there doesn't seem to be a clear pattern here.
+
+Taking the log of both sulphats and TS02:
+
+```{r echo=FALSE, Multivariate_Investigations98}
+#Create a new  variable for logsulphates
+#wd3$logsulphates <- log(wd3$sulphates)
+
+ggplot(aes(x = sulphates, y = total.sulfur.dioxide),
+       data = wd3) +
+       geom_point(aes(color = CatQ)) +
+  geom_smooth() +
+  scale_color_brewer(type = "seq") +
+    scale_x_log10(breaks = c(0.5, 1)) +
+  scale_y_log10()
+```
+
+Lets try using the Y variable as output, in this case quality. 
+Given that we have the highest correlations between quality and these two
+variables.
+
+```{r echo=FALSE, Multivariate_Investigations989}
+#Create a new categorical variable for quality
+ggplot(aes(x = sulphates, y = quality, colour = CatACETIC),
+       data = wd3) +
+       geom_jitter(alpha = 0.5, size = 0.9)
+```
+
+What about log sulfates? We know we have a skewed distribution of Sulphates,
+so transforming could give us a clearer idea of what's going on:
+
+```{r echo=FALSE, Multivariate_Investigations765}
+
+ggplot(aes(x = sulphates, y = quality, colour = CatACETIC),
+       data = wd3) +
+       geom_jitter(alpha = 0.5) +
+  scale_x_log10(breaks = c(0.1, 0.5, 1, 1.5))
+```
+
+This is a bit clearer. Quality has a positive association with Sulphates - we
+see this reflected in that there is a slight creeping left to right as we
+move up quality. The negative relationship between Volatility and quality
+is also apparent in that we see more green and blue further down
+the quality scale.
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. Were there features that strengthened each other in terms of \
+looking at your feature(s) of interest?
+
+The ratio of mean log FSO2 to mean log TS02 appears to have a minor effect.
+Noticeablymore of the high quality wines showed up at the lower end.
+
+There did not seem to be any relationship between the amount of acetic acid
+and log of sulphates.
+
+Log TS02 and Sulphates did have a relationship - however there was a strange
+plateua in the middle. I would guess that this implies that up to a certain
+point, adding one increases the other - however something happens to the
+sulphates at a certain concentration that prevents it being converted to S02 - 
+perhaps because it is preferentially converted into something else - before the
+linear relationship resumes.
+
+### Were there any interesting or surprising interactions between features?
+
+I was surprised that there were no high acetic acid concentrations at higher
+sulfate concentrations.
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the \
+strengths and limitations of your model.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, Plot_One}
+ggplot(aes(x = pfree, y = quality_mean),
+       data = wd.qual_by_free_fixed ) +
+  geom_point() +
+  geom_smooth() +
+  ggtitle('Mean Quality versus FS02 Percentile') +
+  ylab("Mean Quality") +
+  xlab("Free Sulphur Dioxide (Percentile Rank)")
+
+```
+
+### Description One
+
+This graph establishes that despite the information provided there isn't a
+relationship between FS02 and Quality.
+
+### Plot Two
+```{r echo=FALSE, Plot_Two}
+library(RColorBrewer)
+
+ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide),
+       data = wd3) +
+       geom_jitter(aes(color = CatQ)) +
+    scale_color_brewer(type = 'seq',
+                     guide = guide_legend(title = 'Colour', reverse = FALSE,
+                                          override.aes = list(alpha = 1, size = 2))) + 
+  geom_smooth() +
+    ggtitle('TSO2 Versus FS02') +
+  xlab("Log Free Sulphur Dioxide") +
+  ylab("Log Total Sulphur Dioxide") +
+  scale_x_log10(breaks = c(1, 10, 50)) +
+  scale_y_log10()
+```
+
+### Description Two
+
+By omitting the mediocre wines we can see more clearly whether the good ones
+fall on the high or low side of the F/T So2 ratio. In this case it is still
+ambiguous however it does look like more good wines fall under the line.
+
+### Plot Three
+```{r echo=FALSE, Plot_Three}
+ggplot(aes(x = sulphates, y = total.sulfur.dioxide),
+       data = wd3) +
+       geom_point(aes(color = CatQ)) +
+  geom_smooth() +
+    ggtitle('Sulphates to S02 by Quality') +
+  xlab("Log Free Sulphates") +
+  ylab("Log Total Sulphur Dioxide") +
+      scale_color_brewer(type = 'seq',
+                     guide = guide_legend(title = 'Colour', reverse = FALSE,
+                                          override.aes = list(alpha = 1, size = 2))) +
+    scale_x_log10(breaks = c(0.5, 1, 2)) +
+  scale_y_log10()
+
+
+```
+
+### Description Three
+By carrying out the same modification we can take out some of the noise and
+examine the relationship between the ratio of TS02 to Sulphates by Quality.
+
+The graph shows little clear relationship between the variables, though there
+is a cluster of poor quality wines at low levels of both Sulphates and Sulphur
+Dioxide.
+------
+
+# Reflection
+
+Overall I would say that despite the lack of a continuous output variable
+and my overall unfamiliarity with wine I was able to explore several
+interesting aspects of the data, in particular testing what appear to be
+inaccurate assumptions about how several variables would relate to quality
+based on the descriptions provided.
+
+The major hurdle in this project was grappling with the inherent biases
+of the distributions and finding a clear way of accounting for this.
+
+My background reading on the topic revealed that wine is an incredibly complex
+product, so there are many many more chemical variables to explore.
+Moreover as mentioned previously, the output metric - quality is very
+questionable given the evidence against the ability of wine tasters to 
+consistently grade wines. However it should be noted that the quality metric
+used in this dataset is itself a median, and the gradings are rather broad, so
+this would offset any inaccuracy and still provide a good general sense of 
+whether a wine is good or not.
